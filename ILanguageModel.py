@@ -1,11 +1,20 @@
 from abc import ABC, abstractmethod
 
 class ILanguageModel(ABC):
-	"""Interface for a generic language model"""
+	"""Interface for a generic language model
+	
+	Usage sample:
+
+	lm = LanguageModelImplementation(initial_context="Hello world.")
+
+	lm.add_word_to_context('Test')
+
+	next_word_ranking = lm()
+	"""
 
 
 	@abstractmethod
-	def __init__(self, context_window_length=16, next_word_possibilities_number=16):
+	def __init__(self, context_window_length=16, next_word_possibilities_number=16, initial_context=''):
 		pass
 
 	@abstractmethod

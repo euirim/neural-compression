@@ -17,6 +17,9 @@ class ILanguageModel(ABC):
 	def __init__(self, context_window_length=16, next_word_possibilities_number=16, initial_context=''):
 		pass
 
+	def get_context_window_length(self):
+		return self._context_window_length
+
 	@abstractmethod
 	def reset(self, new_context):
 		"""

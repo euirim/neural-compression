@@ -5,16 +5,15 @@ class ILanguageModel(ABC):
 	
 	Usage sample:
 
-	lm = LanguageModelImplementation(initial_context="Hello world.")
+	lm = LanguageModelImplementation(initial_context=['Hello', 'world', '.'])
 
 	lm.add_word_to_context('Test')
 
 	next_word_ranking = lm()
 	"""
 
-
 	@abstractmethod
-	def __init__(self, context_window_length=16, next_word_possibilities_number=16, initial_context=''):
+	def __init__(self, initial_context, context_window_length=16, next_word_possibilities_number=16):
 		pass
 
 	def get_context_window_length(self):

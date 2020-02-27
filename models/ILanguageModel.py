@@ -39,6 +39,6 @@ class ILanguageModel(ABC):
 	def __call__(self):
 		"""
 		Gets a ranking of possible next words, given current context.
-		@returns Dict<word, probability>.
+		@returns List of tuples (word, probability).
 		"""
 		pass

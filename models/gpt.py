@@ -6,22 +6,22 @@ import transformers as tfms
 from .ILanguageModel import ILanguageModel
 
 
-class XLNetModel(ILanguageModel):
-    """XLNet Language Model.
+class GPTModel(ILanguageModel):
+    """GPT Language Model.
 
     Usage sample:
 
-    xlnet = XLNetModel(initial_context=['Hello', 'world', '.'])
+    gpt = GPTModel(initial_context=['Hello', 'world', '.'])
 
-    xlnet.add_word_to_context('Test')
+    gpt.add_word_to_context('Test')
 
-    next_word_ranking = xlnet()
+    next_word_ranking = gpt()
     """
     def __init__(self, context_window_length=16, next_word_possibilities_number=16, initial_context=''):
         self.window_length = context_window_length
         self.num_possibilities = next_word_possibilities_number
-        self.model = tfms.XLNetLMHeadModel.from_pretrained('xlnet-large-cased')
-        self.tokenizer = tfms.XLNetTokenizer.from_pretrained('xlnet-large-cased')
+        self.model = tfms.OpenAIGPTLMHeadModel.from_pretrained('openai-gpt')
+        self.tokenizer = tfms.OpenAIGPTTokenizer.from_pretrained('openai-gpt')
 
         # Prevent dropout from being considered when evaluating
         self.model.eval()

@@ -1,4 +1,4 @@
-from collections import OrderedDict 
+from collections import OrderedDict
 
 import torch
 import transformers as tfms
@@ -17,15 +17,21 @@ class GPTModel(ILanguageModel):
 
     next_word_ranking = gpt()
     """
-    def __init__(self, context_window_length=16, next_word_possibilities_number=16, initial_context=''):
+
+    def __init__(
+        self,
+        context_window_length=16,
+        next_word_possibilities_number=16,
+        initial_context="",
+    ):
         self.window_length = context_window_length
         self.num_possibilities = next_word_possibilities_number
-        self.model = tfms.OpenAIGPTLMHeadModel.from_pretrained('openai-gpt')
-        self.tokenizer = tfms.OpenAIGPTTokenizer.from_pretrained('openai-gpt')
+        self.model = tfms.OpenAIGPTLMHeadModel.from_pretrained("openai-gpt")
+        self.tokenizer = tfms.OpenAIGPTTokenizer.from_pretrained("openai-gpt")
 
         # Prevent dropout from being considered when evaluating
         self.model.eval()
-        
+
         if initial_context:
             self.context = initial_context
         else:
@@ -33,7 +39,7 @@ class GPTModel(ILanguageModel):
 
     def reset(self, new_context):
         if len(new_context) > self.window_length:
-            raise Exception('New context exceeds context window length.')
+            raise Exception("New context exceeds context window length.")
 
         self.context = new_context
 
@@ -47,14 +53,14 @@ class GPTModel(ILanguageModel):
 
     def __call__(self):
         if len(self.context) > 0:
-            inpt = self.tokenizer.encode(' '.join(self.context))
+            inpt = self.tokenizer.encode(" ".join(self.context))
         else:
-            inpt = self.tokenizer.encode('')
+            inpt = self.tokenizer.encode("")
 
         with torch.no_grad():
             inpt = torch.tensor([inpt])
             outputs = self.model(inpt)
-            loss = outputs[0][0,-1,:]
+            loss = outputs[0][0, -1, :]
             softmaxed = torch.softmax(loss, dim=0)
             top_words = torch.topk(softmaxed, k=self.num_possibilities)
             top_words_indices = top_words.indices
@@ -67,4 +73,4 @@ class GPTModel(ILanguageModel):
                 result[word] = prob
 
             return result
- 
+

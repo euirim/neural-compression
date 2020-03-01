@@ -6,16 +6,16 @@ import transformers as tfms
 from .ILanguageModel import ILanguageModel
 
 
-class GPT2Model(ILanguageModel):
-    """GPT-2 Language Model.
+class XLNetModel(ILanguageModel):
+    """XLNet Language Model.
 
     Usage sample:
 
-    gpt2 = GPT2Model(initial_context=['Hello', 'world', '.'])
+    xlnet = XLNetModel(initial_context=['Hello', 'world', '.'])
 
-    gpt2.add_word_to_context('Test')
+    xlnet.add_word_to_context('Test')
 
-    next_word_ranking = gpt2()
+    next_word_ranking = xlnet()
     """
 
     def __init__(
@@ -26,8 +26,8 @@ class GPT2Model(ILanguageModel):
     ):
         self.window_length = context_window_length
         self.num_possibilities = next_word_possibilities_number
-        self.model = tfms.GPT2LMHeadModel.from_pretrained("gpt2")
-        self.tokenizer = tfms.GPT2Tokenizer.from_pretrained("gpt2")
+        self.model = tfms.XLNetLMHeadModel.from_pretrained("xlnet-large-cased")
+        self.tokenizer = tfms.XLNetTokenizer.from_pretrained("xlnet-large-cased")
 
         # Prevent dropout from being considered when evaluating
         self.model.eval()
@@ -39,7 +39,7 @@ class GPT2Model(ILanguageModel):
 
     def reset(self, new_context):
         if len(new_context) > self.window_length:
-            raise Exception('New context exceeds context window length.')
+            raise Exception("New context exceeds context window length.")
 
         self.context = new_context
 
@@ -52,13 +52,13 @@ class GPT2Model(ILanguageModel):
         self.context.append(word)
 
     def __str__(self):
-        return "GPT-2"
+        return "XLNet"
 
     def __call__(self):
         if len(self.context) > 0:
-            inpt = self.tokenizer.encode(" ".join(self.context), add_prefix_space=True)
+            inpt = self.tokenizer.encode(" ".join(self.context))
         else:
-            inpt = self.tokenizer.encode("", add_prefix_space=True)
+            inpt = self.tokenizer.encode("")
 
         with torch.no_grad():
             inpt = torch.tensor([inpt])

@@ -1,4 +1,4 @@
-from .ILanguageModel import ILanguageModel
+from neural_compression.models import ILanguageModel
 from collections import OrderedDict
 import math
 from bitarray import bitarray
@@ -37,7 +37,8 @@ class LMProtocol:
 		@param compressed_binary: binary string
 		@returns original string
 		"""
-		binary = zlib.decompress(compressed_binary)
+		binary = bitarray()
+		binary.frombytes(zlib.decompress(compressed_binary))
 		compressed_object = self._get_object_from_binary(binary)
 		uncompressed_string = self._get_string_from_compressed_object(compressed_object)
 		return uncompressed_string
@@ -76,8 +77,10 @@ class LMProtocol:
 		binary = bitarray()
 		binary_initial_context = bitarray()
 		initial_context_bytes = compressed_object['initial_context'].encode('utf-8')
-		binary_initial_context.extend(('{0:0' + str(math.log2(self._initial_context_max_bit_size)) + 'b}').format(str(len(initial_context_bytes))))
-		binary_initial_context.extend(initial_context_bytes)
+		initial_context_bits = bitarray()
+		initial_context_bits.frombytes(initial_context_bytes)
+		binary_initial_context.extend(('{0:0' + str(int(math.log2(self._initial_context_max_bit_size))) + 'b}').format(len(initial_context_bits)))
+		binary_initial_context.frombytes(initial_context_bytes)
 		binary.extend(binary_initial_context)
 
 		for word in compressed_object['words']:
@@ -87,14 +90,16 @@ class LMProtocol:
 				binary_word.append(True)
 				uncompressed_word = bitarray()
 				uncompressed_word.frombytes(word['word'].encode('utf-8'))
-				binary_word.extend(('{0:0' + str(math.log2(self._out_of_vocabulary_word_max_bit_size)) + 'b}').format(str(len(uncompressed_word))))
+				binary_word.extend(('{0:0' + str(int(math.log2(self._out_of_vocabulary_word_max_bit_size))) + 'b}').format(len(uncompressed_word)))
 				binary_word.extend(uncompressed_word)
 			else:
 				binary_word.append(False)
-				binary_word.extend(('{0:0' + str(math.log2(self._next_word_possibilities_number)) + 'b}').format(str(word['ranking'])))
+				binary_word.extend(('{0:0' + str(int(math.log2(self._next_word_possibilities_number))) + 'b}').format(word['ranking']))
 			
 			binary.extend(binary_word)
 
+		# Append 1's to the end
+		binary.extend([True for _ in range(8 - len(binary) % 8)])
 		return binary
 
 	def _get_string_from_compressed_object(self, compressed_object):
@@ -119,7 +124,7 @@ class LMProtocol:
 				word = list(word_probabilities.keys())[item['ranking']]
 			words.append(word)
 			self.lm.add_word_to_context(word)
-		return ' '.join(compressed_object['initial_context'] + words)
+		return compressed_object['initial_context'] + ' '.join(words)
 
 
 	def _get_ranking_from_probabilities(self, word_probabilities, word):
@@ -135,22 +140,28 @@ class LMProtocol:
 		initial_context_length_binary = binary[0:int(math.log2(self._initial_context_max_bit_size))]
 		initial_context_length = int(initial_context_length_binary.to01(), 2)
 		initial_context_binary = binary[int(math.log2(self._initial_context_max_bit_size)):int(math.log2(self._initial_context_max_bit_size)) + initial_context_length]
-		obj['initial_context'] = initial_context_binary.decode('utf-8')
+		obj['initial_context'] = initial_context_binary.tobytes().decode('utf-8')
 		obj['words'] = []
 		words_binary = binary[int(math.log2(self._initial_context_max_bit_size)) + initial_context_length:]
 		while len(words_binary) > 0:
 			word = {}
 			word['out_of_vocabulary'] = words_binary[0]
 			if word['out_of_vocabulary']:
-				word_binary_length_binary = words_binary[1 : 1 + int(math.log2(self._out_of_vocabulary_word_max_bit_size))]
-				word_binary_length = int(word_binary_length_binary.to01(), 2)
-				word_binary = words_binary[1 + int(math.log2(self._out_of_vocabulary_word_max_bit_size)) : 1 + int(math.log2(self._out_of_vocabulary_word_max_bit_size)) + word_binary_length]
-				word['word'] = word_binary.decode('utf-8')
-				words_binary = words_binary[1 + int(math.log2(self._out_of_vocabulary_word_max_bit_size)) + word_binary_length :]
+				# If there are fewer than 8 bits, then it must be the end of the file, ignore bits.
+				if len(words_binary) < 8:
+					words_binary = []
+					word = None
+				else:
+					word_binary_length_binary = words_binary[1 : 1 + int(math.log2(self._out_of_vocabulary_word_max_bit_size))]
+					word_binary_length = int(word_binary_length_binary.to01(), 2)
+					word_binary = words_binary[1 + int(math.log2(self._out_of_vocabulary_word_max_bit_size)) : 1 + int(math.log2(self._out_of_vocabulary_word_max_bit_size)) + word_binary_length]
+					word['word'] = word_binary.tobytes().decode('utf-8')
+					words_binary = words_binary[1 + int(math.log2(self._out_of_vocabulary_word_max_bit_size)) + word_binary_length :]
 			else:
 				ranking_binary = words_binary[1 : 1 + int(math.log2(self._next_word_possibilities_number))]
 				word['ranking'] = int(ranking_binary.to01(), 2)
 				words_binary = words_binary[1 + int(math.log2(self._next_word_possibilities_number)) :]
-			obj['words'].append(word)
+			if word:
+				obj['words'].append(word)
 		
 		return obj

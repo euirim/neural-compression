@@ -30,10 +30,10 @@ class GPT2Model(ILanguageModel):
             self.context = []
 
     def reset(self, new_context):
-        if len(new_context) > self.window_length:
+        if len(new_context.split()) > self.window_length:
             raise Exception('New context exceeds context window length.')
 
-        self.context = new_context
+        self.context = new_context.split()
 
     def add_word_to_context(self, word):
         assert len(self.context) <= self.window_length

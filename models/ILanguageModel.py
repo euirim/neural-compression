@@ -42,6 +42,13 @@ class ILanguageModel(ABC):
         pass
 
     @abstractmethod
+    def __str__(self):
+        """
+        Returns the name of the model as a string.
+        """
+        pass
+
+    @abstractmethod
     def __call__(self):
         """
         Gets a ranking of possible next words, given current context.

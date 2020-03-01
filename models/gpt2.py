@@ -51,6 +51,9 @@ class GPT2Model(ILanguageModel):
 
         self.context.append(word)
 
+    def __str__(self):
+        return "GPT-2"
+
     def __call__(self):
         if len(self.context) > 0:
             inpt = self.tokenizer.encode(" ".join(self.context), add_prefix_space=True)

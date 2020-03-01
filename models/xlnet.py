@@ -51,6 +51,9 @@ class XLNetModel(ILanguageModel):
 
         self.context.append(word)
 
+    def __str__(self):
+        return "XLNet"
+
     def __call__(self):
         if len(self.context) > 0:
             inpt = self.tokenizer.encode(" ".join(self.context))

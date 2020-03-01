@@ -67,7 +67,7 @@ class LMProtocol:
             words[: self._context_window_length]
         )
 
-        self.lm.reset(compressed_object["initial_context"])
+        self.lm.reset(words[: self._context_window_length])
 
         compressed_object["words"] = []
         for word in words[self._context_window_length :]:

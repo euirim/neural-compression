@@ -22,7 +22,7 @@ class GPTModel(ILanguageModel):
         self,
         context_window_length=16,
         next_word_possibilities_number=16,
-        initial_context="",
+        initial_context=None,
     ):
         self.window_length = context_window_length
         self.num_possibilities = next_word_possibilities_number
@@ -32,7 +32,7 @@ class GPTModel(ILanguageModel):
         # Prevent dropout from being considered when evaluating
         self.model.eval()
 
-        if initial_context:
+        if initial_context is not None:
             self.context = initial_context
         else:
             self.context = []
@@ -50,6 +50,9 @@ class GPTModel(ILanguageModel):
             self.context.pop()
 
         self.context.append(word)
+
+    def __str__(self):
+        return "GPT"
 
     def __call__(self):
         if len(self.context) > 0:

@@ -130,3 +130,11 @@ dmypy.json
 
 # VS Code
 .vscode/settings.json
+
+# base_transformer model
+/models/base_transformer/checkpoint
+/models/base_transformer/model*
+/models/base_transformer/vocab*
+/models/base_transformer/language_model*
+/models/base_transformer/languagemodel_lm1b32k-*
+input.txt

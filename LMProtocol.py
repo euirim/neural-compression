@@ -1,4 +1,4 @@
-from neural_compression.models import ILanguageModel
+from models import ILanguageModel
 from collections import OrderedDict
 import math
 from bitarray import bitarray

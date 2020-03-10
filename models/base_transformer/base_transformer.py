@@ -61,8 +61,10 @@ class BaseTransformerModel(ILanguageModel):
         return "base_transformer"
 
     def __call__(self):
-        os.remove('input.txt')
-        os.remove('decoded.txt')
+        if os.path.exists('input.txt'):
+            os.remove('input.txt')
+        if os.path.exists('decoded.txt'):
+            os.remove('decoded.txt')
         with open('input.txt', 'w') as f:
             f.write(self.context)
         t2t_decoder.main('None')

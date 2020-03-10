@@ -42,7 +42,7 @@ class BaseTransformerModel(ILanguageModel):
         FLAGS.decode_hparams = "beam_size={},return_beams=True,extra_length=1".format(next_word_possibilities_number)
         FLAGS.data_dir = "./models/base_transformer"
         FLAGS.decode_from_file = "./input.txt"
-		tf.app.flags.DEFINE_string('f', '', 'kernel')
+        tf.app.flags.DEFINE_string('f', '', 'kernel')
 
     def reset(self, new_context):
         if len(new_context) > self.window_length:

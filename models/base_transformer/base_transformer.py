@@ -69,3 +69,10 @@ class BaseTransformerModel(ILanguageModel):
         with open('input.txt', 'w') as f:
             f.write(self.context)
         t2t_decoder.main('None')
+        result = OrderedDict()
+        with open('decoded.txt', 'r') as f:
+            words = f.readline()
+            words = words.split()
+            for index, word in enumerate(words):
+                result[word] = -index
+        return result

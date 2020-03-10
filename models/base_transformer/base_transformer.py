@@ -4,7 +4,7 @@ from collections import OrderedDict
 from tensor2tensor.bin import t2t_decoder
 import tensorflow as tf
 
-from .ILanguageModel import ILanguageModel
+from models.ILanguageModel import ILanguageModel
 
 
 class BaseTransformerModel(ILanguageModel):

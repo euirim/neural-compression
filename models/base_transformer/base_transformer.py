@@ -67,4 +67,7 @@ class BaseTransformerModel(ILanguageModel):
             os.remove('decoded.txt')
         with open('input.txt', 'w') as f:
             f.write(self.context)
-        t2t_decoder.main('None')
+        tf.app.run()
+
+def main(argv):
+    t2t_decoder.main(argv)

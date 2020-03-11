@@ -67,7 +67,7 @@ class BaseTransformerModel(ILanguageModel):
         if os.path.exists('decoded.txt'):
             os.remove('decoded.txt')
         with open('input.txt', 'w') as f:
-            f.write(self.context)
+            f.write(' '.join(self.context))
         t2t_decoder.main('None')
         result = OrderedDict()
         with open('decoded.txt', 'r') as f:

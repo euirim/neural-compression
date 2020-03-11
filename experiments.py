@@ -5,6 +5,7 @@ from models.gpt import GPTModel
 from models.gpt2 import GPT2Model
 from models.xlnet import XLNetModel
 from LMProtocol import LMProtocol
+from models.base_transformer.base_transformer import BaseTransformerModel
 
 
 def load_corpus(name, filename, preprocess_func):
@@ -61,9 +62,7 @@ def output_results(results):
 
 if __name__ == "__main__":
     models = [
-        GPTModel,
-        GPT2Model,
-        XLNetModel,
+        BaseTransformerModel,
     ]
     corpus_filename = "data/art_of_war.txt"
 

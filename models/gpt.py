@@ -6,6 +6,13 @@ import transformers as tfms
 from .ILanguageModel import ILanguageModel
 
 
+device = None
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+
+
 class GPTModel(ILanguageModel):
     """GPT Language Model.
 
@@ -26,7 +33,7 @@ class GPTModel(ILanguageModel):
     ):
         self.window_length = context_window_length
         self.num_possibilities = next_word_possibilities_number
-        self.model = tfms.OpenAIGPTLMHeadModel.from_pretrained("openai-gpt")
+        self.model = tfms.OpenAIGPTLMHeadModel.from_pretrained("openai-gpt").to(device)
         self.tokenizer = tfms.OpenAIGPTTokenizer.from_pretrained("openai-gpt")
 
         # Prevent dropout from being considered when evaluating
@@ -61,7 +68,7 @@ class GPTModel(ILanguageModel):
             inpt = self.tokenizer.encode("")
 
         with torch.no_grad():
-            inpt = torch.tensor([inpt])
+            inpt = torch.tensor([inpt]).to(device)
             outputs = self.model(inpt)
             loss = outputs[0][0, -1, :]
             softmaxed = torch.softmax(loss, dim=0)
@@ -71,7 +78,9 @@ class GPTModel(ILanguageModel):
 
             result = OrderedDict()
             for i in range(top_words_indices.shape[0]):
-                word = self.tokenizer.decode(torch.tensor([top_words_indices[i]]))
+                word = self.tokenizer.decode(
+                    torch.tensor([top_words_indices[i]]).to(device)
+                )
                 prob = top_words_probabilities[i].item()
                 result[word] = prob
 

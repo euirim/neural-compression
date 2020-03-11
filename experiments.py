@@ -1,11 +1,21 @@
 import time
 
+import torch
+
 from corpus import Corpus
 from models.gpt import GPTModel
 from models.gpt2 import GPT2Model
 from models.xlnet import XLNetModel
 from LMProtocol import LMProtocol
-from models.base_transformer.base_transformer import BaseTransformerModel
+
+# from models.base_transformer.base_transformer import BaseTransformerModel
+
+
+device = None
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
 
 
 def load_corpus(name, filename, preprocess_func):
@@ -22,8 +32,8 @@ def eval_model(model, corpus):
                 duration: Int (seconds)
                 compression_rate: Float (between 0 and 1)
     """
-    context_window_lengths = list(range(1, 20))
-    next_word_possibilities_numbers = [1, 5, 10, 50, 100, 1000, 10000]
+    context_window_lengths = [2, 4, 8, 16, 32]
+    next_word_possibilities_numbers = [2, 4, 8, 16, 32]
     total_experiments = len(context_window_lengths) * len(
         next_word_possibilities_numbers
     )
@@ -31,9 +41,10 @@ def eval_model(model, corpus):
 
     # Run experiment on given model and store result
     # in given results object.
-    for i, cwl in enumerate(context_window_lengths):
-        for j, nwpn in enumerate(next_word_possibilities_numbers):
-            print(f"Experiment ({i * j} / {total_experiments})")
+    for i, cwl in enumerate(context_window_lengths, 1):
+        for j, nwpn in enumerate(next_word_possibilities_numbers, 1):
+            exp_number = (i - 1) * len(next_word_possibilities_numbers) + j
+            print(f"Experiment ({exp_number} / {total_experiments})")
             protocol = LMProtocol(
                 language_model=model,
                 context_window_length=cwl,
@@ -62,7 +73,7 @@ def output_results(results):
 
 if __name__ == "__main__":
     models = [
-        BaseTransformerModel,
+        GPTModel,
     ]
     corpus_filename = "data/art_of_war.txt"
 

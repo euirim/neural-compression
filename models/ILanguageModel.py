@@ -6,9 +6,15 @@ class ILanguageModel(ABC):
     
     Usage sample:
 
-    lm = LanguageModelImplementation(initial_context=['Hello', 'world', '.'])
+    lm = LanguageModelImplementation(
+        initial_context=[
+            ['Hello', 'world', '.',],
+            ['My', 'name', 'is',],
+            ['French', 'president',],
+        ]
+    )
 
-    lm.add_word_to_context('Test')
+    lm.add_to_context([['apple'], ['banana'], ['orange']])
 
     next_word_ranking = lm()
     """
@@ -19,6 +25,7 @@ class ILanguageModel(ABC):
         initial_context,
         context_window_length=16,
         next_word_possibilities_number=16,
+        num_batches=4,
     ):
         pass
 
@@ -34,9 +41,9 @@ class ILanguageModel(ABC):
         pass
 
     @abstractmethod
-    def add_word_to_context(self, word):
+    def add_to_context(self, words):
         """
-        Adds the given word to the context, and removes oldest word if necessary.
+        Adds the given words to the context, and removes oldest words if necessary.
         @param word: String.
         """
         pass

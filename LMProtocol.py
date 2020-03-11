@@ -21,7 +21,7 @@ class LMProtocol:
         assert math.log2(out_of_vocabulary_word_max_bit_size).is_integer()
         assert math.log2(initial_context_max_bit_size).is_integer()
         self.lm = language_model(
-            context_window_length=16, next_word_possibilities_number=16
+            context_window_length=16, next_word_possibilities_number=16, num_batches=1
         )
         self._context_window_length = context_window_length
         self._next_word_possibilities_number = next_word_possibilities_number
@@ -49,7 +49,7 @@ class LMProtocol:
         binary.frombytes(zlib.decompress(compressed_binary))
         compressed_object = self._get_object_from_binary(binary)
         uncompressed_string = self._get_string_from_compressed_object(compressed_object)
-        return uncompressed_string
+        return self.lm.tokenizer.decode([int(w) for w in uncompressed_string.split()])
 
     def _get_compressed_object(self, text):
         """
@@ -62,14 +62,16 @@ class LMProtocol:
 				ranking: Int (only if not out_of_vocabulary)
 			>
 		"""
-        words = text.split()
+        words = self.lm.tokenizer.encode(text)[0]
         assert len(words) > self._context_window_length
         compressed_object = {}
         compressed_object["initial_context"] = " ".join(
-            words[: self._context_window_length]
+            [str(w) for w in words[: self._context_window_length]]
         )
 
-        self.lm.reset(compressed_object["initial_context"].split())
+        self.lm.reset(
+            self.lm.tokenizer.encode(compressed_object["initial_context"])[0]
+        )
 
         compressed_object["words"] = []
         for word in words[self._context_window_length :]:
@@ -83,7 +85,7 @@ class LMProtocol:
                 compressed_object["words"].append(
                     {"out_of_vocabulary": False, "ranking": ranking}
                 )
-            self.lm.add_word_to_context(word)
+            self.lm.add_to_context([word])
         return compressed_object
 
     def _get_binary_from_object(self, compressed_object):
@@ -142,7 +144,7 @@ class LMProtocol:
 			>
 		@returns uncompressed_string
 		"""
-        self.lm.reset(compressed_object["initial_context"].split())
+        self.lm.reset(self.lm.tokenizer.encode(compressed_object["initial_context"])[0])
         words = []
 
         for item in compressed_object["words"]:
@@ -152,8 +154,8 @@ class LMProtocol:
                 word_probabilities = self.lm()
                 word = list(word_probabilities.keys())[item["ranking"]]
             words.append(word)
-            self.lm.add_word_to_context(word)
-        return compressed_object["initial_context"] + " ".join(words)
+            self.lm.add_to_context([word])
+        return compressed_object["initial_context"] + " ".join([str(w) for w in words])
 
     def _get_ranking_from_probabilities(self, word_probabilities, word):
         """

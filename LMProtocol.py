@@ -1,8 +1,11 @@
-from models import ILanguageModel
 from collections import OrderedDict
 import math
 from bitarray import bitarray
+
 import zlib
+from tqdm import tqdm
+
+from models import ILanguageModel
 
 
 class LMProtocol:
@@ -15,13 +18,14 @@ class LMProtocol:
         initial_context_max_bit_size=16384,
     ):
         """
-		@param language_model: ILanguageModel
-		"""
+        @param language_model: ILanguageModel
+        """
         assert math.log2(next_word_possibilities_number).is_integer()
         assert math.log2(out_of_vocabulary_word_max_bit_size).is_integer()
         assert math.log2(initial_context_max_bit_size).is_integer()
         self.lm = language_model(
-            context_window_length=16, next_word_possibilities_number=16
+            context_window_length=context_window_length,
+            next_word_possibilities_number=next_word_possibilities_number,
         )
         self._context_window_length = context_window_length
         self._next_word_possibilities_number = next_word_possibilities_number
@@ -30,9 +34,9 @@ class LMProtocol:
 
     def compress(self, text):
         """
-		@param text: String to compress
-		@returns binary string
-		"""
+        @param text: String to compress
+        @returns binary string
+        """
 
         compressed_object = self._get_compressed_object(text)
         binary = self._get_binary_from_object(compressed_object)
@@ -42,9 +46,9 @@ class LMProtocol:
 
     def decompress(self, compressed_binary):
         """
-		@param compressed_binary: binary string
-		@returns original string
-		"""
+        @param compressed_binary: binary string
+        @returns original string
+        """
         binary = bitarray()
         binary.frombytes(zlib.decompress(compressed_binary))
         compressed_object = self._get_object_from_binary(binary)
@@ -53,15 +57,15 @@ class LMProtocol:
 
     def _get_compressed_object(self, text):
         """
-		@param text: String to compress
-		@returns Dict:
-			initial_context: String
-			words: List<Dict:
-				out_of_vocabulary: Bool
-				word: String (only if out_of_vocabulary)
-				ranking: Int (only if not out_of_vocabulary)
-			>
-		"""
+        @param text: String to compress
+        @returns Dict:
+            initial_context: String
+            words: List<Dict:
+                out_of_vocabulary: Bool
+                word: String (only if out_of_vocabulary)
+                ranking: Int (only if not out_of_vocabulary)
+            >
+        """
         words = text.split()
         assert len(words) > self._context_window_length
         compressed_object = {}
@@ -72,7 +76,8 @@ class LMProtocol:
         self.lm.reset(compressed_object["initial_context"].split())
 
         compressed_object["words"] = []
-        for word in words[self._context_window_length :]:
+        print("Getting compressed object.")
+        for word in tqdm(words[self._context_window_length :]):
             word_probabilities = self.lm()
             if word not in word_probabilities:
                 compressed_object["words"].append(
@@ -100,7 +105,8 @@ class LMProtocol:
         binary_initial_context.frombytes(initial_context_bytes)
         binary.extend(binary_initial_context)
 
-        for word in compressed_object["words"]:
+        print("Getting binary from object.")
+        for word in tqdm(compressed_object["words"]):
             binary_word = bitarray()
             # TODO: instead of having a separate flag for out of vocabulary, use ranking 0 to mean o.o.v.
             if word["out_of_vocabulary"]:
@@ -133,19 +139,20 @@ class LMProtocol:
 
     def _get_string_from_compressed_object(self, compressed_object):
         """
-		@param compressed_object: Dict:
-			initial_context: String
-			words: List<Dict:
-				out_of_vocabulary: Bool
-				word: String (only if out_of_vocabulary)
-				ranking: Int (only if not out_of_vocabulary)
-			>
-		@returns uncompressed_string
-		"""
+        @param compressed_object: Dict:
+            initial_context: String
+            words: List<Dict:
+                out_of_vocabulary: Bool
+                word: String (only if out_of_vocabulary)
+                ranking: Int (only if not out_of_vocabulary)
+            >
+        @returns uncompressed_string
+        """
         self.lm.reset(compressed_object["initial_context"].split())
         words = []
 
-        for item in compressed_object["words"]:
+        print("Getting string from compressed object.")
+        for item in tqdm(compressed_object["words"]):
             if item["out_of_vocabulary"]:
                 word = item["word"]
             else:
@@ -157,9 +164,9 @@ class LMProtocol:
 
     def _get_ranking_from_probabilities(self, word_probabilities, word):
         """
-		@param word_probabilities: Dict<word, probability>
-		@returns ranking: Int
-		"""
+        @param word_probabilities: Dict<word, probability>
+        @returns ranking: Int
+        """
         ordered_words = OrderedDict(
             sorted(word_probabilities.items(), key=lambda t: -t[1])
         )

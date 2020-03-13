@@ -138,3 +138,7 @@ dmypy.json
 /models/base_transformer/language_model*
 /models/base_transformer/languagemodel_lm1b32k-*
 input.txt
+
+# results
+results/*
+!results/.gitkeep

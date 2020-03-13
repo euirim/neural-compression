@@ -24,6 +24,7 @@ class GPT2Model(ILanguageModel):
         next_word_possibilities_number=16,
         initial_context="",
     ):
+        self.name = "GPT-2"
         self.window_length = context_window_length
         self.num_possibilities = next_word_possibilities_number
         self.model = tfms.GPT2LMHeadModel.from_pretrained("gpt2")
@@ -39,7 +40,10 @@ class GPT2Model(ILanguageModel):
 
     def reset(self, new_context):
         if len(new_context) > self.window_length:
-            raise Exception('New context exceeds context window length.')
+            print(
+                f"New context ({len(new_context)}) exceeds context window length ({self.window_length})."
+            )
+            new_context = new_context[-self.window_length:]
 
         self.context = new_context
 
